@@ -4,19 +4,22 @@
       "name": "HelloWorld",
       "path": "./programs/hello_world.py",
       "language": "Python3",
-      "interval": 3
+      "interval": 3,
+      "output": true
     },
     {
       "name": "ProjectEuler0001",
       "path": "./programs/project_euler_0001.py",
       "language": "Python3",
-      "interval": 5
+      "interval": 5, 
+      "output": true
     },
     {
       "name": "ByeWorld",
       "path": "./programs/bye_world.go",
-      "language": "Python3",
-      "interval": 6
+      "language": "Go",
+      "interval": 6,
+      "output": false
     }
   ]
 }

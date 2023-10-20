@@ -18,11 +18,7 @@ type Program struct {
 	Path     string        `json:"path"`
 	Language string        `json:"language"`
 	Interval time.Duration `json:"interval"`
-}
-
-func createProgram(name string, path string, language string, interval int) Program {
-	program := Program{name, path, language, time.Duration(interval) * time.Second}
-	return program
+	Output   bool          `json:"output"`
 }
 
 func readSettings() Programs {
@@ -41,41 +37,58 @@ func readSettings() Programs {
 }
 
 func (program *Program) createTicker() *time.Ticker {
-	return time.NewTicker(program.Interval)
+	return time.NewTicker(program.Interval * time.Second)
 }
 
 func (program *Program) run() {
 	switch program.Language {
-	case "python3":
+	case "Python3":
 		{
 			out, err := exec.Command("python3", program.Path).Output()
 			if err != nil {
 				log.Fatal(err)
 			}
-			fmt.Println(string(out))
+			fmt.Println("Ran " + program.Name + " at " + time.Now().String())
+			if program.Output {
+				fmt.Println(program.Name + ": " + string(out))
+			}
 		}
-	case "golang":
+	case "Go":
 		{
 			out, err := exec.Command("go", "run", program.Path).Output()
 			if err != nil {
 				log.Fatal(err)
 			}
-			fmt.Println(string(out))
+			fmt.Println("Ran " + program.Name + " at " + time.Now().String())
+			if program.Output {
+				fmt.Println(program.Name + ": " + string(out))
+			}
 		}
 	}
 }
 
+func schedule(program Program, done <-chan bool) *time.Ticker {
+	ticker := program.createTicker()
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				program.run()
+			case <-done:
+				return
+			}
+		}
+	}()
+	return ticker
+}
+
 func main() {
 	programs := readSettings()
+	done := make(chan bool)
+
 	for _, program := range programs.Programs {
-		ticker := program.createTicker()
-		go func(ticker *time.Ticker, program Program) {
-			for {
-				select {
-				case <-ticker.C:
-					program.run()
-				}
-			}
-		}(ticker, program)
+		schedule(program, done)
 	}
+	time.Sleep(1 * time.Hour)
+	close(done)
 }
